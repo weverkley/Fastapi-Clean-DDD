@@ -1,0 +1,7 @@
+{
+    "entity_name": "Product",
+    "entity_name_snake_case": "{{ cookiecutter.entity_name | to_snake }}",
+    "_extensions": [
+        "jinja2_strcase.StrcaseExtension"
+    ]
+}

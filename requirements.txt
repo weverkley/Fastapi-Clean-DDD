@@ -1,0 +1,33 @@
+# Web framework
+fastapi==0.115.5
+fastapi-cli==0.0.5
+
+# ASGI server
+uvicorn[standard]==0.34.3
+
+# Database
+SQLAlchemy==2.0.41
+asyncpg==0.30.0
+
+# Migrations
+alembic==1.16.1
+psycopg2-binary==2.9.10
+
+# Env management
+python-dotenv==1.1.0
+
+# Pydantic models
+pydantic==2.10.2
+pydantic-settings==2.9.1
+pydantic[email]==2.10.2
+# Typing (optional, for dev experience)
+typing_extensions==4.12.2
+
+# Mapping and ORM
+py-automapper==2.2.0
+
+# Pyclean (optional, for dev experience)
+pyclean==3.1.0
+
+requests==2.32.4
+PyJWT==2.10.1

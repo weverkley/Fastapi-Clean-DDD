@@ -1,0 +1,27 @@
+# Python-specific files
+*.pyc
+*.pyo
+__pycache__/
+*.egg-info/
+
+# Virtual environment directories
+venv/
+.venv/
+env/
+.env
+
+# IDE/code editor files
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating system-specific files
+.DS_Store
+Thumbs.db
+
+# Other common files
+*.log
+*.tmp
+*.swp
+.env
+alembic.ini
