@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     RABBITMQ_PORT: int = 5672
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASSWORD: str = "guest"
+    RABBITMQ_EXCHANGE: str = "app.events"
+    USER_CREATED_QUEUE: str = "user.created.queue"
+    USER_CREATED_ROUTING_KEY: str = "user.created.v1"
+    OUTBOX_BATCH_SIZE: int = 100
+    OUTBOX_PUBLISH_INTERVAL_SECONDS: int = 2
 
     # Configure the settings model to read from a .env file
     model_config = SettingsConfigDict(

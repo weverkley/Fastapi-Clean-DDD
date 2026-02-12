@@ -1,81 +1,129 @@
 # FastAPI: Clean Architecture & DDD API
 
-This repository provides a complete REST API implementation in **FastAPI**, demonstrating the principles of **Clean Architecture** and **Domain-Driven Design (DDD)**. The project uses `py-automapper` for object mapping between layers, `SQLAlchemy` for asynchronous ORM, and `Alembic` for database migrations.
+This repository is a FastAPI REST API template using Clean Architecture and Domain-Driven Design (DDD), with async SQLAlchemy and Alembic.
 
-The main goal is to offer a robust and practical template for building scalable and maintainable Python applications, especially for projects with complex business logic.
+## Key Features
 
-## ✨ Key Features
+- Clean Architecture with explicit layer boundaries.
+- Async-first API and persistence flow.
+- Dependency injection via FastAPI.
+- Mapping between DTOs and entities using `py-automapper`.
+- Cookiecutter CRUD generator to scaffold new modules.
+- JWT-based authentication flow.
+- SQLAlchemy + Alembic integration for persistence and migrations.
+- RabbitMQ-based messaging with transactional outbox publishing.
 
-* **Modern Architecture**: Clear implementation of Clean Architecture and DDD tactical patterns.
-* **Async by Default**: Uses `async/await` across all layers, from API routes to database queries with `asyncpg`.
-* **Dependency Injection**: Leverages FastAPI's dependency injection system to decouple layers.
-* **Automatic Mapping**: Uses `py-automapper` to reduce boilerplate when converting DTOs (Schemas) into domain Entities.
-* **Code Generation**: Includes a Cookiecutter-based CRUD generator to automate the creation of new entities, speeding up development.
-* **JWT Authentication**: Authentication and authorization logic based on JSON Web Tokens.
-* **ORM and Migrations**: Integration with SQLAlchemy for object-relational mapping and Alembic for managing database schema migrations.
+## Architecture
 
-## 🏛️ Design Philosophy
+- `src/domain`
+  - Entities, repository interfaces, domain exceptions.
+- `src/application`
+  - Use-case services and application DTOs.
+  - Request DTOs: `src/application/dto/request`
+  - Model DTOs: `src/application/dto/model`
+- `src/infrastructure`
+  - Repository implementations, DB/session setup, IoC wiring.
+- `src/presentation`
+  - FastAPI routes and API schemas.
+  - Routes: `src/presentation/api/v1`
+  - Request/response schemas: `src/presentation/api/schemas`
 
-### 1. Clean Architecture
+## DTO and Schema Flow
 
-The core of the project is the **separation of concerns**, achieved by dividing the software into layers. The most important principle is the **Dependency Rule**: *source code dependencies can only point inwards*.
+- Presentation layer receives/returns Pydantic schemas.
+- Routes convert request schemas into application request/model DTOs.
+- Services work with application DTOs and domain entities.
+- Responses are validated back into presentation response schemas.
 
-* **`src/domain`**: Contains business Entities, Repository interfaces, and custom exceptions. It is the heart of the application, with no external dependencies.
-* **`src/application`**: Orchestrates the data flow and contains the application-specific business logic (Use Cases), implemented as Services. It defines the DTOs (Pydantic Schemas) for data transfer.
-* **`src/infrastructure`**: Implements the interfaces from the domain layer. It contains details of frameworks and technologies, such as database configuration, repository implementations, and the Inversion of Control (IoC) container.
-* **`src/presentation`**: The outermost layer, responsible for interaction with the user. In this case, the FastAPI API and its routes.
+## CRUD Generator
 
-### 2. Domain-Driven Design (DDD)
+The generator templates are in `crud-generator`.
 
-DDD is an approach that focuses on a deep understanding of the business domain. This project uses the following tactical patterns:
+Generated files are moved to:
+- Repositories: `src/infrastructure/data/repository`
+- Repository interfaces: `src/domain/interface/repository`
+- Services: `src/application/service`
+- Service interfaces: `src/application/interface/service`
+- Entities: `src/domain/entity`
+- Presentation schemas: `src/presentation/api/schemas`
+- Routes: `src/presentation/api/v1`
+- DB configurations: `src/infrastructure/data/configuration`
 
-* **Entity**: An object with a distinct identity that persists over time (e.g., `UserEntity`).
-* **Repository**: An interface that abstracts the persistence mechanism, allowing access to domain objects as if they were in a collection.
+After generation, the schema is also copied to:
+- `src/application/dto/model`
 
-### 3. Automatic Mapping with `py-automapper`
+The hook updates route registration in the selected app module (`APP_MODULE` when provided, otherwise `main:app`).
 
-To reduce repetitive code and simplify data conversion between layers, this project uses the `py-automapper` library. The mapping between the Pydantic Schemas of the Application layer and the Entities of the Domain layer is configured centrally.
+## Setup
 
-* **Why?** Automatic mapping speeds up development and reduces the chance of manual errors in object conversions. The logic for creating an entity from a schema is simplified, as seen in the `BaseService`.
-* **Where is it configured?** Mappings are registered at application startup through the `configure_mappings` function, which in turn calls the specific configurations for each entity, such as `map_user`.
+1. Prerequisites
+- Python 3.9+
+- PostgreSQL
+- RabbitMQ
 
-## 🚀 Setup and Installation
+2. Clone
+```bash
+git clone https://github.com/weverkley/Fastapi-Clean-DDD.git
+cd Fastapi-Clean-DDD
+```
 
-Follow these steps to run the project locally.
+3. Create and activate a virtual environment
+```bash
+python -m venv venv
+source venv/bin/activate
+```
 
-1.  **Prerequisites**
-    * Python 3.9+
-    * An active PostgreSQL server
+4. Install dependencies
+```bash
+pip install -r requirements.txt
+```
 
-2.  **Clone the Repository**
-    ```bash
-    git clone [https://github.com/weverkley/Fastapi-Clean-DDD.git](https://github.com/weverkley/Fastapi-Clean-DDD.git)
-    cd Fastapi-Clean-DDD
-    ```
+5. Configure environment variables
+```bash
+cp .env.example .env
+```
 
-3.  **Create a Virtual Environment**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-    ```
+Edit `.env` (especially `DATABASE_URL`).
 
-4.  **Install Dependencies**
-    ```bash
-    pip install -r requirements.txt
-    ```
+Default RabbitMQ vars in `.env.example`:
+- `RABBITMQ_URL=amqp://guest:guest@localhost:5672/`
+- `RABBITMQ_HOST=localhost`
+- `RABBITMQ_PORT=5672`
+- `RABBITMQ_USER=guest`
+- `RABBITMQ_PASSWORD=guest`
 
-5.  **Configure Environment Variables**
-    Create a `.env` file from the example:
-    ```bash
-    cp .env.example .env
-    ```
-    Now, edit the `.env` file with your configurations, especially the `DATABASE_URL`.
+If using Docker services:
+```bash
+docker compose up -d
+```
 
-## ⚙️ Usage
-
-### Running the Application
-
-To start the API server, run the following command:
+## Run
 
 ```bash
 uvicorn main:app --reload
+```
+
+## Messaging Layer (Producer/Consumer)
+
+Implemented pattern:
+- Producer writes domain data and outbox event in the same DB transaction.
+- Outbox publisher worker reads pending outbox rows and publishes to RabbitMQ.
+- Consumer worker subscribes to `user.created.v1`.
+
+Files:
+- Outbox table/entity: `src/domain/entity/outbox_message_entity.py`
+- Outbox repository: `src/infrastructure/data/repository/outbox_repository.py`
+- RabbitMQ publisher adapter: `src/infrastructure/messaging/rabbitmq_event_bus.py`
+- Publisher worker: `worker_outbox_publisher.py`
+- Example consumer worker: `worker_user_created_consumer.py`
+
+Run migrations:
+```bash
+alembic -c alembic.ini.example upgrade head
+```
+
+Run workers:
+```bash
+python worker_outbox_publisher.py
+python worker_user_created_consumer.py
+```
