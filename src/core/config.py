@@ -18,10 +18,18 @@ class Settings(BaseSettings):
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASSWORD: str = "guest"
     RABBITMQ_EXCHANGE: str = "app.events"
+    RABBITMQ_DLX_EXCHANGE: str = "app.events.dlx"
     USER_CREATED_QUEUE: str = "user.created.queue"
     USER_CREATED_ROUTING_KEY: str = "user.created.v1"
+    USER_CREATED_DLQ: str = "user.created.dlq"
+    USER_CREATED_DLQ_ROUTING_KEY: str = "user.created.dlq.v1"
     OUTBOX_BATCH_SIZE: int = 100
     OUTBOX_PUBLISH_INTERVAL_SECONDS: int = 2
+    OUTBOX_MAX_ATTEMPTS: int = 10
+    MESSAGE_BUS_PROVIDER: str = "rabbitmq"  # rabbitmq | gcp_pubsub
+    GCP_PROJECT_ID: str = ""
+    GCP_PUBSUB_DEFAULT_TOPIC: str = "app.events"
+    GCP_PUBSUB_USER_CREATED_SUBSCRIPTION: str = "user-created-sub"
 
     # Configure the settings model to read from a .env file
     model_config = SettingsConfigDict(

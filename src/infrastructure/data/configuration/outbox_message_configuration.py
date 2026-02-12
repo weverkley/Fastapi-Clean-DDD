@@ -20,6 +20,7 @@ OutboxMessageConfiguration = Table(
     Column("attempts", Integer, nullable=False, server_default=text("0")),
     Column("available_at", DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")),
     Column("published_at", DateTime(timezone=True), nullable=True),
+    Column("dead_lettered_at", DateTime(timezone=True), nullable=True),
     Column("last_error", Text, nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")),
     Column("updated_at", DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")),

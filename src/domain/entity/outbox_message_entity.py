@@ -14,6 +14,7 @@ class OutboxMessageEntity(BaseEntity):
     attempts: int
     available_at: datetime
     published_at: datetime | None
+    dead_lettered_at: datetime | None
     last_error: str | None
     created_at: datetime
     updated_at: datetime

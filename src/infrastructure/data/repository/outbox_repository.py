@@ -37,7 +37,7 @@ class OutboxRepository(IOutboxRepository):
                 o.id, o.event_id, o.event_type, o.event_version,
                 o.exchange, o.routing_key, o.payload, o.correlation_id,
                 o.status, o.attempts, o.available_at, o.published_at,
-                o.last_error, o.created_at, o.updated_at
+                o.dead_lettered_at, o.last_error, o.created_at, o.updated_at
             """
         )
         result = await self.session.execute(stmt, {"limit": limit})
@@ -58,10 +58,12 @@ class OutboxRepository(IOutboxRepository):
             message.attempts = row["attempts"]
             message.available_at = row["available_at"]
             message.published_at = row["published_at"]
+            message.dead_lettered_at = row["dead_lettered_at"]
             message.last_error = row["last_error"]
             message.created_at = row["created_at"]
             message.updated_at = row["updated_at"]
             messages.append(message)
+        await self.session.commit()
         return messages
 
     async def mark_published(self, message_id: int) -> None:
@@ -70,22 +72,25 @@ class OutboxRepository(IOutboxRepository):
             UPDATE outbox_messages
             SET status = 'published',
                 published_at = NOW(),
+                dead_lettered_at = NULL,
                 last_error = NULL,
                 updated_at = NOW()
             WHERE id = :id
             """
         )
         await self.session.execute(stmt, {"id": message_id})
+        await self.session.commit()
 
-    async def mark_failed(self, message_id: int, error: str) -> None:
+    async def mark_failed(self, message_id: int, error: str, max_attempts: int) -> None:
         retry_delay_seconds = 30
         next_attempt = datetime.now(timezone.utc).timestamp() + retry_delay_seconds
         stmt = text(
             """
             UPDATE outbox_messages
-            SET status = 'pending',
+            SET status = CASE WHEN attempts >= :max_attempts THEN 'dead' ELSE 'pending' END,
                 last_error = :error,
-                available_at = to_timestamp(:next_attempt),
+                dead_lettered_at = CASE WHEN attempts >= :max_attempts THEN NOW() ELSE dead_lettered_at END,
+                available_at = CASE WHEN attempts >= :max_attempts THEN available_at ELSE to_timestamp(:next_attempt) END,
                 updated_at = NOW()
             WHERE id = :id
             """
@@ -96,5 +101,7 @@ class OutboxRepository(IOutboxRepository):
                 "id": message_id,
                 "error": error[:2000],
                 "next_attempt": next_attempt,
+                "max_attempts": max_attempts,
             },
         )
+        await self.session.commit()

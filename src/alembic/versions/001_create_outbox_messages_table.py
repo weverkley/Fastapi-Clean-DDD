@@ -36,6 +36,7 @@ def upgrade() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
         sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("dead_lettered_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("last_error", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
@@ -53,8 +54,23 @@ def upgrade() -> None:
         sa.UniqueConstraint("event_id"),
     )
     op.create_index("ix_outbox_status_available", "outbox_messages", ["status", "available_at"], unique=False)
+    op.create_table(
+        "processed_messages",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("consumer_name", sa.String(length=120), nullable=False),
+        sa.Column("message_id", sa.String(length=128), nullable=False),
+        sa.Column(
+            "processed_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("consumer_name", "message_id", name="uq_processed_consumer_message"),
+    )
 
 
 def downgrade() -> None:
+    op.drop_table("processed_messages")
     op.drop_index("ix_outbox_status_available", table_name="outbox_messages")
     op.drop_table("outbox_messages")

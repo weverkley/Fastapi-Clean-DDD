@@ -94,6 +94,8 @@ Default RabbitMQ vars in `.env.example`:
 
 If using Docker services:
 ```bash
+docker compose build
+docker compose run --rm api alembic -c alembic.ini.example upgrade head
 docker compose up -d
 ```
 
@@ -107,15 +109,35 @@ uvicorn main:app --reload
 
 Implemented pattern:
 - Producer writes domain data and outbox event in the same DB transaction.
-- Outbox publisher worker reads pending outbox rows and publishes to RabbitMQ.
-- Consumer worker subscribes to `user.created.v1`.
+- Outbox publisher worker reads pending outbox rows and publishes using the configured bus provider.
+- Consumer worker subscribes to `user.created.v1` with idempotency tracking.
+- Dead-letter routing is enabled for consumer queue failures.
 
 Files:
 - Outbox table/entity: `src/domain/entity/outbox_message_entity.py`
 - Outbox repository: `src/infrastructure/data/repository/outbox_repository.py`
-- RabbitMQ publisher adapter: `src/infrastructure/messaging/rabbitmq_event_bus.py`
-- Publisher worker: `worker_outbox_publisher.py`
-- Example consumer worker: `worker_user_created_consumer.py`
+- RabbitMQ publisher adapter: `src/infrastructure/messaging/adapters/outbound/rabbitmq_outgoing_event_publisher.py`
+- GCP Pub/Sub publisher adapter: `src/infrastructure/messaging/adapters/outbound/pubsub_outgoing_event_publisher.py`
+- Outgoing publisher port: `src/application/interface/messaging/outgoing_event_publisher.py`
+- Outbox publish use case handler: `src/application/handlers/publish_outbox_batch_handler.py`
+- Outgoing publisher factory: `src/infrastructure/messaging/factories/outgoing_event_publisher_factory.py`
+- Publisher worker: `src/infrastructure/entrypoints/worker_outbox_publisher.py`
+- Consumer worker: `src/infrastructure/entrypoints/worker_user_created_consumer.py`
+- Consumer orchestration: `src/infrastructure/messaging/consumers/user_created_consumer.py`
+- Inbound adapter port: `src/application/interface/messaging/incoming_event_adapter.py`
+- Inbound adapters:
+  - `src/infrastructure/messaging/adapters/inbound/rabbitmq_incoming_event_adapter.py`
+  - `src/infrastructure/messaging/adapters/inbound/pubsub_incoming_event_adapter.py`
+- Consumer use case handler: `src/application/handlers/user_created_event_handler.py`
+
+Bus provider selection:
+- `MESSAGE_BUS_PROVIDER=rabbitmq` (default)
+- `MESSAGE_BUS_PROVIDER=gcp_pubsub`
+
+For GCP Pub/Sub set:
+- `GCP_PROJECT_ID=<your-project-id>`
+- `GCP_PUBSUB_USER_CREATED_SUBSCRIPTION=<subscription-id>`
+- `GOOGLE_APPLICATION_CREDENTIALS=<path to service account json>`
 
 Run migrations:
 ```bash
@@ -124,6 +146,11 @@ alembic -c alembic.ini.example upgrade head
 
 Run workers:
 ```bash
-python worker_outbox_publisher.py
-python worker_user_created_consumer.py
+python src/infrastructure/entrypoints/worker_outbox_publisher.py
+python src/infrastructure/entrypoints/worker_user_created_consumer.py
+```
+
+Docker entrypoints:
+```bash
+docker compose up -d api worker_outbox_publisher worker_user_created_consumer
 ```

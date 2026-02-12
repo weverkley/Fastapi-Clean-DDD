@@ -46,6 +46,7 @@ class UserService(BaseService[UserRead, UserCreate, UserUpdate], IUserService):
         event.attempts = 0
         event.available_at = datetime.now(timezone.utc)
         event.published_at = None
+        event.dead_lettered_at = None
         event.last_error = None
         event.created_at = datetime.now(timezone.utc)
         event.updated_at = datetime.now(timezone.utc)
