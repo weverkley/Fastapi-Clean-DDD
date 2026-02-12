@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from fastapi import Request
-from ...dto.auth_dto import AuthLoginDto
+from ...dto.request.auth.auth_dto import AuthLoginDto
 
 
 class IAuthService(ABC):

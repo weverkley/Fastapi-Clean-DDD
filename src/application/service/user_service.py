@@ -1,10 +1,9 @@
 from typing import Sequence
-from src.application.schemas.user_schema import UserCreate, UserRead, UserUpdate
+from src.application.dto.model.user_schema import UserCreate, UserRead, UserUpdate
 from src.application.service.base import BaseService
 from src.domain.entity.user_entity import UserEntity
 from src.domain.interface.repository.user_repository import IUserRepository
 from src.application.interface.service.user_service import IUserService
-from automapper import mapper
 
 class UserService(BaseService[UserRead, UserCreate, UserUpdate], IUserService):
     def __init__(self, repo: IUserRepository):

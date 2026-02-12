@@ -1,6 +1,2 @@
-from pydantic import BaseModel, EmailStr
+from .request.auth.auth_dto import AuthLoginDto
 
-class AuthLoginDto(BaseModel):
-    email: EmailStr
-    password: str
-    type: int | None = None

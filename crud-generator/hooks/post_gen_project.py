@@ -1,7 +1,5 @@
 import os
 import shutil
-import subprocess
-import textwrap
 
 def _add_imports_if_missing(file_path: str, required_imports: list[str]):
     """
@@ -35,14 +33,54 @@ def _add_imports_if_missing(file_path: str, required_imports: list[str]):
         f.write("\n")
 
 
+def _copy_schema_to_application_dto(source_file: str, dest_file: str) -> None:
+    """
+    Copies a generated presentation schema to the application DTO model folder.
+    """
+    try:
+        with open(source_file, "r") as source:
+            content = source.read()
+    except FileNotFoundError:
+        print(f"Warning: Could not find schema file at {source_file} to copy.")
+        return
+
+    os.makedirs(os.path.dirname(dest_file), exist_ok=True)
+    with open(dest_file, "w") as target:
+        target.write(content)
+
+
+def _get_default_app_module(project_root: str) -> str | None:
+    config_path = os.path.join(project_root, "src", "core", "config.py")
+    try:
+        with open(config_path, "r") as config_file:
+            for line in config_file:
+                if "APP_MODULE" in line and "=" in line:
+                    _, value = line.split("=", 1)
+                    module = value.strip().strip("\"'")
+                    if module:
+                        return module
+    except FileNotFoundError:
+        return None
+    return None
+
+
+def _get_main_module_file(project_root: str) -> str:
+    app_module = os.getenv("APP_MODULE", "").strip()
+    if not app_module:
+        app_module = _get_default_app_module(project_root) or "main:app"
+    module_name = app_module.split(":", 1)[0]
+    module_rel_path = f"{module_name}.py".replace(".", os.sep)
+    return os.path.join(project_root, module_rel_path)
+
+
 def update_project_files(entity_name, entity_name_snake_case, project_root):
     """
-    Updates all necessary project files (IOC, main.py) with the new entity's configuration.
+    Updates all necessary project files (IOC and selected main module).
     """
     entity_title = entity_name.title()
 
-    # --- Update main.py ---
-    main_py_file = os.path.join(project_root, "main.py")
+    # --- Update selected main module ---
+    main_py_file = _get_main_module_file(project_root)
     router_import_str = f"from src.presentation.api.v1 import {entity_name_snake_case}_routes as {entity_name_snake_case}_router"
     router_include_str = f"internal_router.include_router({entity_name_snake_case}_router.router, prefix=\"/{entity_name_snake_case}s\", tags=[\"{entity_name}s\"])"
 
@@ -74,7 +112,7 @@ def update_project_files(entity_name, entity_name_snake_case, project_root):
             f.truncate()
         print(f"Updated {main_py_file}")
     except FileNotFoundError:
-        print(f"Warning: main.py not found at {main_py_file}. Could not update routes.")
+        print(f"Warning: {os.path.basename(main_py_file)} not found at {main_py_file}. Could not update routes.")
 
 
     # --- Update ioc/mappings.py ---
@@ -167,7 +205,7 @@ def move_generated_files():
         f"{entity_name_snake_case}_service.py": os.path.join(project_root, "src/application/service"),
         f"i_{entity_name_snake_case}_service.py": os.path.join(project_root, "src/application/interface/service"),
         f"{entity_name_snake_case}_entity.py": os.path.join(project_root, "src/domain/entity"),
-        f"{entity_name_snake_case}_schema.py": os.path.join(project_root, "src/application/schemas"),
+        f"{entity_name_snake_case}_schema.py": os.path.join(project_root, "src/presentation/api/schemas"),
         f"{entity_name_snake_case}_routes.py": os.path.join(project_root, "src/presentation/api/v1"),
         f"{entity_name_snake_case}_configuration.py": os.path.join(project_root, "src/infrastructure/data/configuration"),
     }
@@ -183,6 +221,11 @@ def move_generated_files():
             print(f"Moved {file_name}")
         else:
             print(f"Warning: {file_name} not found")
+
+    schema_name = f"{entity_name_snake_case}_schema.py"
+    presentation_schema = os.path.join(project_root, "src/presentation/api/schemas", schema_name)
+    application_schema = os.path.join(project_root, "src/application/dto/model", schema_name)
+    _copy_schema_to_application_dto(presentation_schema, application_schema)
 
     # After moving files, update the project files
     update_project_files(entity_name, entity_name_snake_case, project_root)

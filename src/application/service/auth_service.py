@@ -3,7 +3,7 @@ import requests
 from typing import Any
 from fastapi import Request
 
-from ..dto.auth_dto import AuthLoginDto
+from ..dto.request.auth.auth_dto import AuthLoginDto
 from ...domain.exception.permission_denied_exception import PermissionDeniedException
 from ...domain.interface.repository.user_repository import IUserRepository
 from ..interface.service.auth_service import IAuthService

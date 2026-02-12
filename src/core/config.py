@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     SECRET_KEY: str = "qazwsxedc132"
     DATABASE_URL: str = "postgresql+asyncpg://root:12345678@localhost:5432/smgeo_consulta"
+    RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
+    RABBITMQ_HOST: str = "localhost"
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USER: str = "guest"
+    RABBITMQ_PASSWORD: str = "guest"
 
     # Configure the settings model to read from a .env file
     model_config = SettingsConfigDict(
