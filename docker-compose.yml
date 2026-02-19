@@ -83,7 +83,7 @@ services:
       OUTBOX_MAX_ATTEMPTS: 10
       MESSAGE_BUS_PROVIDER: rabbitmq
     command: >
-      python src/infrastructure/workers/outbox_publisher/worker.py
+      python -m src.infrastructure.workers.outbox_publisher.worker
 
   worker_cart_checkout_consumer:
     build:
@@ -125,7 +125,7 @@ services:
       OUTBOX_MAX_ATTEMPTS: 10
       MESSAGE_BUS_PROVIDER: rabbitmq
     command: >
-      python src/infrastructure/workers/cart_checkout_consumer/worker.py
+      python -m src.infrastructure.workers.cart_checkout_consumer.worker
 
   worker_order_created_consumer:
     build:
@@ -167,7 +167,7 @@ services:
       OUTBOX_MAX_ATTEMPTS: 10
       MESSAGE_BUS_PROVIDER: rabbitmq
     command: >
-      python src/infrastructure/workers/order_created_consumer/worker.py
+      python -m src.infrastructure.workers.order_created_consumer.worker
 
   postgres:
     image: postgres:16-alpine

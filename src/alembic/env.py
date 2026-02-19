@@ -1,6 +1,7 @@
 from src.infrastructure.data.configuration.base import metadata
 from src.infrastructure.ioc.mappings import configure_mappings
 from logging.config import fileConfig
+import os
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -12,6 +13,12 @@ configure_mappings() # Ensure that the mappings are configured before running mi
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    # Alembic uses a sync engine; convert async URL when provided by app settings.
+    sync_database_url = database_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
+    config.set_main_option("sqlalchemy.url", sync_database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
