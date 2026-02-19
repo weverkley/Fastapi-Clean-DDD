@@ -9,6 +9,10 @@ from src.domain.exception.permission_denied_exception import PermissionDeniedExc
 from src.infrastructure.ioc.mappings import configure_mappings
 from src.presentation.api.v1 import auth_routes
 from src.presentation.api.v1 import user_routes
+from src.presentation.api.v1 import product_routes
+from src.presentation.api.v1 import stock_routes
+from src.presentation.api.v1 import cart_routes
+from src.presentation.api.v1 import order_routes
 
 app = FastAPI(
     title="API Clean/DDD architecture using imperative mapping",
@@ -20,6 +24,10 @@ internal_router = APIRouter()
 configure_mappings()
 internal_router.include_router(auth_routes.router, prefix="/auth", tags=["Authentication"])
 internal_router.include_router(user_routes.router, prefix="/users", tags=["Users"])
+internal_router.include_router(product_routes.router, prefix="/products", tags=["Products"])
+internal_router.include_router(stock_routes.router, prefix="/stocks", tags=["Stock"])
+internal_router.include_router(cart_routes.router, prefix="/carts", tags=["Carts"])
+internal_router.include_router(order_routes.router, prefix="/orders", tags=["Orders"])
 
 app.include_router(internal_router)
 

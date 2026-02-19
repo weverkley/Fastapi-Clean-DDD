@@ -12,6 +12,7 @@ This repository is a FastAPI REST API template using Clean Architecture and Doma
 - JWT-based authentication flow.
 - SQLAlchemy + Alembic integration for persistence and migrations.
 - RabbitMQ-based messaging with transactional outbox publishing.
+- Shopping cart domain example with `users`, `products`, `stocks`, `carts`, and `orders`.
 
 ## Architecture
 
@@ -110,7 +111,9 @@ uvicorn main:app --reload
 Implemented pattern:
 - Producer writes domain data and outbox event in the same DB transaction.
 - Outbox publisher worker reads pending outbox rows and publishes using the configured bus provider.
-- Consumer worker subscribes to `user.created.v1` with idempotency tracking.
+- Checkout worker subscribes to `cart.checkout.requested.v1`, reserves stock, and creates orders.
+- Order worker subscribes to `order.created.v1`, finalizes order and emits `order.completed`.
+- Consumer idempotency is tracked in `processed_messages`.
 - Dead-letter routing is enabled for consumer queue failures.
 
 Files:
@@ -122,13 +125,18 @@ Files:
 - Outbox publish use case handler: `src/application/handlers/publish_outbox_batch_handler.py`
 - Outgoing publisher factory: `src/infrastructure/messaging/factories/outgoing_event_publisher_factory.py`
 - Publisher worker: `src/infrastructure/workers/outbox_publisher/worker.py`
-- Consumer worker: `src/infrastructure/workers/user_created_consumer/worker.py`
-- Consumer orchestration: `src/infrastructure/messaging/consumers/user_created_consumer.py`
+- Consumer worker (checkout): `src/infrastructure/workers/cart_checkout_consumer/worker.py`
+- Consumer worker (order): `src/infrastructure/workers/order_created_consumer/worker.py`
+- Consumer orchestration:
+  - `src/infrastructure/messaging/consumers/cart_checkout_consumer.py`
+  - `src/infrastructure/messaging/consumers/order_created_consumer.py`
 - Inbound adapter port: `src/application/interface/messaging/incoming_event_adapter.py`
 - Inbound adapters:
   - `src/infrastructure/messaging/adapters/inbound/rabbitmq_incoming_event_adapter.py`
   - `src/infrastructure/messaging/adapters/inbound/pubsub_incoming_event_adapter.py`
-- Consumer use case handler: `src/application/handlers/user_created_event_handler.py`
+- Consumer use case handlers:
+  - `src/application/handlers/cart_checkout_requested_event_handler.py`
+  - `src/application/handlers/order_created_event_handler.py`
 
 Bus provider selection:
 - `MESSAGE_BUS_PROVIDER=rabbitmq` (default)
@@ -136,7 +144,8 @@ Bus provider selection:
 
 For GCP Pub/Sub set:
 - `GCP_PROJECT_ID=<your-project-id>`
-- `GCP_PUBSUB_USER_CREATED_SUBSCRIPTION=<subscription-id>`
+- `GCP_PUBSUB_CART_CHECKOUT_REQUESTED_SUBSCRIPTION=<subscription-id>`
+- `GCP_PUBSUB_ORDER_CREATED_SUBSCRIPTION=<subscription-id>`
 - `GOOGLE_APPLICATION_CREDENTIALS=<path to service account json>`
 
 Run migrations:
@@ -147,10 +156,11 @@ alembic -c alembic.ini.example upgrade head
 Run workers:
 ```bash
 python src/infrastructure/workers/outbox_publisher/worker.py
-python src/infrastructure/workers/user_created_consumer/worker.py
+python src/infrastructure/workers/cart_checkout_consumer/worker.py
+python src/infrastructure/workers/order_created_consumer/worker.py
 ```
 
 Docker entrypoints:
 ```bash
-docker compose up -d api worker_outbox_publisher worker_user_created_consumer
+docker compose up -d api worker_outbox_publisher worker_cart_checkout_consumer worker_order_created_consumer
 ```

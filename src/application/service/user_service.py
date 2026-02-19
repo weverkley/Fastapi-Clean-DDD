@@ -29,7 +29,7 @@ class UserService(BaseService[UserRead, UserCreate, UserUpdate], IUserService):
 
         payload = {
             "id": entity.id,
-            "nome": entity.nome,
+            "name": entity.name,
             "email": entity.email,
             "occurred_at": datetime.now(timezone.utc).isoformat(),
         }

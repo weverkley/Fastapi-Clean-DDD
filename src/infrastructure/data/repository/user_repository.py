@@ -10,12 +10,7 @@ class UserRepository(BaseRepository[UserEntity], IUserRepository):
         super().__init__(session, UserEntity)
 
     async def list_last_users(self) -> Sequence[UserEntity]:
-        """
-        Retrieve the last users from the database.
-        This method can be customized to include specific filtering or ordering logic.
-        """
-
-        stmt = select(self.model).order_by(desc(getattr(self.model, "data_cadastro"))).limit(10)
+        stmt = select(self.model).order_by(desc(getattr(self.model, "id"))).limit(10)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 

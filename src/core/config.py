@@ -1,4 +1,3 @@
-from pydantic import AnyUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -19,10 +18,23 @@ class Settings(BaseSettings):
     RABBITMQ_PASSWORD: str = "guest"
     RABBITMQ_EXCHANGE: str = "app.events"
     RABBITMQ_DLX_EXCHANGE: str = "app.events.dlx"
+
     USER_CREATED_QUEUE: str = "user.created.queue"
     USER_CREATED_ROUTING_KEY: str = "user.created.v1"
     USER_CREATED_DLQ: str = "user.created.dlq"
     USER_CREATED_DLQ_ROUTING_KEY: str = "user.created.dlq.v1"
+
+    CART_CHECKOUT_REQUESTED_QUEUE: str = "cart.checkout.requested.queue"
+    CART_CHECKOUT_REQUESTED_ROUTING_KEY: str = "cart.checkout.requested.v1"
+    CART_CHECKOUT_REQUESTED_DLQ: str = "cart.checkout.requested.dlq"
+    CART_CHECKOUT_REQUESTED_DLQ_ROUTING_KEY: str = "cart.checkout.requested.dlq.v1"
+
+    ORDER_CREATED_QUEUE: str = "order.created.queue"
+    ORDER_CREATED_ROUTING_KEY: str = "order.created.v1"
+    ORDER_CREATED_DLQ: str = "order.created.dlq"
+    ORDER_CREATED_DLQ_ROUTING_KEY: str = "order.created.dlq.v1"
+    ORDER_COMPLETED_ROUTING_KEY: str = "order.completed.v1"
+
     OUTBOX_BATCH_SIZE: int = 100
     OUTBOX_PUBLISH_INTERVAL_SECONDS: int = 2
     OUTBOX_MAX_ATTEMPTS: int = 10
@@ -30,6 +42,8 @@ class Settings(BaseSettings):
     GCP_PROJECT_ID: str = ""
     GCP_PUBSUB_DEFAULT_TOPIC: str = "app.events"
     GCP_PUBSUB_USER_CREATED_SUBSCRIPTION: str = "user-created-sub"
+    GCP_PUBSUB_CART_CHECKOUT_REQUESTED_SUBSCRIPTION: str = "cart-checkout-requested-sub"
+    GCP_PUBSUB_ORDER_CREATED_SUBSCRIPTION: str = "order-created-sub"
 
     # Configure the settings model to read from a .env file
     model_config = SettingsConfigDict(

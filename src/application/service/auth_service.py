@@ -1,5 +1,4 @@
 import jwt
-import requests
 from typing import Any
 from fastapi import Request
 
@@ -8,7 +7,6 @@ from ...domain.exception.permission_denied_exception import PermissionDeniedExce
 from ...domain.interface.repository.user_repository import IUserRepository
 from ..interface.service.auth_service import IAuthService
 from src.core.config import settings
-from automapper import mapper
 
 
 class AuthService(IAuthService):
@@ -23,12 +21,14 @@ class AuthService(IAuthService):
             
         if user_consulta == None:
             raise PermissionDeniedException("Usuário não encontrado.")
+        if user_consulta.password != data.password:
+            raise PermissionDeniedException("Invalid credentials.")
 
         user_dados = {
             "user": user_consulta.id,
             "email": data.email,
             "tipo": 1,
-            "nome_user": user_consulta.nome,
+            "name": user_consulta.name,
             "token_permissoes": token_permissions,
         }
 
@@ -36,7 +36,7 @@ class AuthService(IAuthService):
 
         return {
             "id": user_consulta.id,
-            "nome": user_consulta.nome,
+            "name": user_consulta.name,
             "email": data.email,
             "tipo": 1,
             "token": token
