@@ -76,6 +76,7 @@ class OutboxRepository(IOutboxRepository):
                 last_error = NULL,
                 updated_at = NOW()
             WHERE id = :id
+              AND status = 'processing'
             """
         )
         await self.session.execute(stmt, {"id": message_id})
@@ -93,6 +94,7 @@ class OutboxRepository(IOutboxRepository):
                 available_at = CASE WHEN attempts >= :max_attempts THEN available_at ELSE to_timestamp(:next_attempt) END,
                 updated_at = NOW()
             WHERE id = :id
+              AND status = 'processing'
             """
         )
         await self.session.execute(
@@ -105,3 +107,6 @@ class OutboxRepository(IOutboxRepository):
             },
         )
         await self.session.commit()
+
+    async def rollback(self) -> None:
+        await self.session.rollback()

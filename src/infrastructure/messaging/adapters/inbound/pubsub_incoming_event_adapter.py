@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import logging
 from contextlib import suppress
 from hashlib import sha256
@@ -8,6 +9,14 @@ from src.application.dto.messaging.incoming_event import IncomingEvent
 from src.application.interface.messaging.incoming_event_adapter import IIncomingEventAdapter
 
 logger = logging.getLogger("consumer.user_created.gcp_pubsub")
+
+
+async def _invoke_callback(callback: Callable[[], object] | None) -> None:
+    if callback is None:
+        return
+    maybe_awaitable = callback()
+    if inspect.isawaitable(maybe_awaitable):
+        await maybe_awaitable
 
 
 class GcpPubSubIncomingEventAdapter(IIncomingEventAdapter):
@@ -21,11 +30,15 @@ class GcpPubSubIncomingEventAdapter(IIncomingEventAdapter):
         subscription_path = self._subscriber.subscription_path(self._project_id, self._subscription_id)
 
         async def process_message(message: pubsub_v1.subscriber.message.Message) -> None:
-            message_id = message.message_id or sha256(message.data).hexdigest()
             attributes = message.attributes or {}
+            payload = message.data.decode("utf-8")
+            event_id = attributes.get("event_id")
+            fallback_key = sha256(f"{attributes.get('event_type', '')}:{payload}".encode("utf-8")).hexdigest()
+            message_key = message.message_id or event_id or fallback_key
             event = IncomingEvent(
-                message_id=message_id,
-                payload=message.data.decode("utf-8"),
+                message_id=message_key,
+                idempotency_key=message_key,
+                payload=payload,
                 source="pubsub",
                 event_type=attributes.get("event_type"),
                 correlation_id=attributes.get("correlation_id"),
@@ -34,12 +47,10 @@ class GcpPubSubIncomingEventAdapter(IIncomingEventAdapter):
             )
             try:
                 await on_event(event)
-                if event.ack:
-                    event.ack()
+                await _invoke_callback(event.ack)
             except Exception:
                 logger.exception("Failed to process Pub/Sub message message_id=%s", event.message_id)
-                if event.nack:
-                    event.nack()
+                await _invoke_callback(event.nack)
 
         def callback(message: pubsub_v1.subscriber.message.Message) -> None:
             loop.create_task(process_message(message))

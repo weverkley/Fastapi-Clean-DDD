@@ -46,6 +46,9 @@ class RabbitMqOutgoingEventPublisher(IOutgoingEventPublisher):
             message_id=event.event_id,
             correlation_id=event.correlation_id,
             type=event.event_type,
-            headers={"event_version": event.event_version},
+            headers={
+                "event_id": event.event_id,
+                "event_version": event.event_version,
+            },
         )
         await exchange_obj.publish(message, routing_key=event.routing_key)

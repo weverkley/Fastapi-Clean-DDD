@@ -121,8 +121,8 @@ Files:
 - Outgoing publisher port: `src/application/interface/messaging/outgoing_event_publisher.py`
 - Outbox publish use case handler: `src/application/handlers/publish_outbox_batch_handler.py`
 - Outgoing publisher factory: `src/infrastructure/messaging/factories/outgoing_event_publisher_factory.py`
-- Publisher worker: `src/infrastructure/entrypoints/worker_outbox_publisher.py`
-- Consumer worker: `src/infrastructure/entrypoints/worker_user_created_consumer.py`
+- Publisher worker: `src/infrastructure/workers/outbox_publisher/worker.py`
+- Consumer worker: `src/infrastructure/workers/user_created_consumer/worker.py`
 - Consumer orchestration: `src/infrastructure/messaging/consumers/user_created_consumer.py`
 - Inbound adapter port: `src/application/interface/messaging/incoming_event_adapter.py`
 - Inbound adapters:
@@ -146,8 +146,8 @@ alembic -c alembic.ini.example upgrade head
 
 Run workers:
 ```bash
-python src/infrastructure/entrypoints/worker_outbox_publisher.py
-python src/infrastructure/entrypoints/worker_user_created_consumer.py
+python src/infrastructure/workers/outbox_publisher/worker.py
+python src/infrastructure/workers/user_created_consumer/worker.py
 ```
 
 Docker entrypoints:

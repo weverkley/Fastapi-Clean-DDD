@@ -65,7 +65,7 @@ services:
       OUTBOX_MAX_ATTEMPTS: 10
       MESSAGE_BUS_PROVIDER: rabbitmq
     command: >
-      python src/infrastructure/entrypoints/worker_outbox_publisher.py
+      python src/infrastructure/workers/outbox_publisher/worker.py
 
   worker_user_created_consumer:
     build:
@@ -98,7 +98,7 @@ services:
       OUTBOX_MAX_ATTEMPTS: 10
       MESSAGE_BUS_PROVIDER: rabbitmq
     command: >
-      python src/infrastructure/entrypoints/worker_user_created_consumer.py
+      python src/infrastructure/workers/user_created_consumer/worker.py
 
   postgres:
     image: postgres:16-alpine

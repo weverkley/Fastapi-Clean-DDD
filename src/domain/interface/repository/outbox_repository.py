@@ -14,3 +14,6 @@ class IOutboxRepository(ABC):
 
     @abstractmethod
     async def mark_failed(self, message_id: int, error: str, max_attempts: int) -> None: ...
+
+    @abstractmethod
+    async def rollback(self) -> None: ...

@@ -1,6 +1,9 @@
+import logging
 from src.application.dto.messaging.outgoing_event import OutgoingEvent
 from src.application.interface.messaging.outgoing_event_publisher import IOutgoingEventPublisher
 from src.domain.interface.repository.outbox_repository import IOutboxRepository
+
+logger = logging.getLogger("outbox.publisher.handler")
 
 
 class PublishOutboxBatchHandler:
@@ -30,9 +33,14 @@ class PublishOutboxBatchHandler:
                 await self._publisher.publish(event)
                 await self._outbox_repo.mark_published(message.id)  # type: ignore[arg-type]
             except Exception as exc:
-                await self._outbox_repo.mark_failed(
-                    message.id,  # type: ignore[arg-type]
-                    str(exc),
-                    self._max_attempts,
-                )
+                await self._outbox_repo.rollback()
+                try:
+                    await self._outbox_repo.mark_failed(
+                        message.id,  # type: ignore[arg-type]
+                        str(exc),
+                        self._max_attempts,
+                    )
+                except Exception:
+                    await self._outbox_repo.rollback()
+                    logger.exception("Failed to mark outbox message as failed message_id=%s", message.id)
         return len(messages)

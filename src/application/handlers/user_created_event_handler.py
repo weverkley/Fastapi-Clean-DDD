@@ -11,10 +11,15 @@ class UserCreatedEventHandler:
         self._consumer_name = consumer_name
 
     async def handle(self, event: IncomingEvent) -> None:
-        already_processed = await self._store.exists(self._consumer_name, event.message_id)
-        if already_processed:
-            logger.info("Skipping duplicate %s message message_id=%s", event.source, event.message_id)
+        message_key = event.idempotency_key
+        should_process = await self._store.try_begin_processing(self._consumer_name, message_key)
+        if not should_process:
+            logger.info("Skipping duplicate %s message key=%s", event.source, message_key)
             return
 
-        logger.info("Consumed %s event message_id=%s payload=%s", event.source, event.message_id, event.payload)
-        await self._store.add(self._consumer_name, event.message_id)
+        try:
+            logger.info("Consumed %s event key=%s payload=%s", event.source, message_key, event.payload)
+            await self._store.mark_processed(self._consumer_name, message_key)
+        except Exception as exc:
+            await self._store.mark_failed(self._consumer_name, message_key, str(exc))
+            raise

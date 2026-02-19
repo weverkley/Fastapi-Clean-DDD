@@ -8,14 +8,20 @@ class SqlAlchemyProcessedMessageStore(IProcessedMessageStore):
     def __init__(self):
         self._session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    async def exists(self, consumer_name: str, message_id: str) -> bool:
+    async def try_begin_processing(self, consumer_name: str, message_id: str) -> bool:
         async with self._session_factory() as session:
             repo = ProcessedMessageRepository(session)
             async with session.begin():
-                return await repo.exists(consumer_name, message_id)
+                return await repo.try_begin_processing(consumer_name, message_id)
 
-    async def add(self, consumer_name: str, message_id: str) -> None:
+    async def mark_processed(self, consumer_name: str, message_id: str) -> None:
         async with self._session_factory() as session:
             repo = ProcessedMessageRepository(session)
             async with session.begin():
-                await repo.add(consumer_name, message_id)
+                await repo.mark_processed(consumer_name, message_id)
+
+    async def mark_failed(self, consumer_name: str, message_id: str, error: str) -> None:
+        async with self._session_factory() as session:
+            repo = ProcessedMessageRepository(session)
+            async with session.begin():
+                await repo.mark_failed(consumer_name, message_id, error)
