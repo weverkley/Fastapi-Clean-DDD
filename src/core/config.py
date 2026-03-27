@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     OUTBOX_BATCH_SIZE: int = 100
     OUTBOX_PUBLISH_INTERVAL_SECONDS: int = 2
     OUTBOX_MAX_ATTEMPTS: int = 10
+    WORKER_RESTART_DELAY_SECONDS: int = 5
     MESSAGE_BUS_PROVIDER: str = "rabbitmq"  # rabbitmq | gcp_pubsub
     GCP_PROJECT_ID: str = ""
     GCP_PUBSUB_DEFAULT_TOPIC: str = "app.events"

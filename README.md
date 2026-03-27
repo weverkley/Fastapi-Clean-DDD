@@ -124,12 +124,11 @@ Files:
 - Outgoing publisher port: `src/application/interface/messaging/outgoing_event_publisher.py`
 - Outbox publish use case handler: `src/application/handlers/publish_outbox_batch_handler.py`
 - Outgoing publisher factory: `src/infrastructure/messaging/factories/outgoing_event_publisher_factory.py`
-- Publisher worker: `src/infrastructure/workers/outbox_publisher/worker.py`
-- Consumer worker (checkout): `src/infrastructure/workers/cart_checkout_consumer/worker.py`
-- Consumer worker (order): `src/infrastructure/workers/order_created_consumer/worker.py`
+- Unified worker service: `src/infrastructure/workers/worker_service.py`
 - Consumer orchestration:
   - `src/infrastructure/messaging/consumers/cart_checkout_consumer.py`
   - `src/infrastructure/messaging/consumers/order_created_consumer.py`
+  - `src/infrastructure/messaging/consumers/outbox_publisher_worker.py`
 - Inbound adapter port: `src/application/interface/messaging/incoming_event_adapter.py`
 - Inbound adapters:
   - `src/infrastructure/messaging/adapters/inbound/rabbitmq_incoming_event_adapter.py`
@@ -155,12 +154,10 @@ alembic -c alembic.ini.example upgrade head
 
 Run workers:
 ```bash
-python src/infrastructure/workers/outbox_publisher/worker.py
-python src/infrastructure/workers/cart_checkout_consumer/worker.py
-python src/infrastructure/workers/order_created_consumer/worker.py
+python -m src.infrastructure.workers.worker_service
 ```
 
 Docker entrypoints:
 ```bash
-docker compose up -d api worker_outbox_publisher worker_cart_checkout_consumer worker_order_created_consumer
+docker compose up -d api worker
 ```

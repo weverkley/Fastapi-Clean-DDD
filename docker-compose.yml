@@ -43,11 +43,11 @@ services:
     command: >
       sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 
-  worker_outbox_publisher:
+  worker:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fastapi_clean_ddd_worker_outbox
+    container_name: fastapi_clean_ddd_worker_service
     restart: unless-stopped
     depends_on:
       postgres:
@@ -81,93 +81,10 @@ services:
       OUTBOX_BATCH_SIZE: 100
       OUTBOX_PUBLISH_INTERVAL_SECONDS: 2
       OUTBOX_MAX_ATTEMPTS: 10
+      WORKER_RESTART_DELAY_SECONDS: 5
       MESSAGE_BUS_PROVIDER: rabbitmq
     command: >
-      python -m src.infrastructure.workers.outbox_publisher.worker
-
-  worker_cart_checkout_consumer:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fastapi_clean_ddd_worker_cart_checkout
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      APP_ENV: development
-      SECRET_KEY: 123123
-      DATABASE_URL: postgresql+asyncpg://postgres:123456@postgres:5432/database
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: guest
-      RABBITMQ_PASSWORD: guest
-      RABBITMQ_EXCHANGE: app.events
-      RABBITMQ_DLX_EXCHANGE: app.events.dlx
-      USER_CREATED_QUEUE: user.created.queue
-      USER_CREATED_ROUTING_KEY: user.created.v1
-      USER_CREATED_DLQ: user.created.dlq
-      USER_CREATED_DLQ_ROUTING_KEY: user.created.dlq.v1
-      CART_CHECKOUT_REQUESTED_QUEUE: cart.checkout.requested.queue
-      CART_CHECKOUT_REQUESTED_ROUTING_KEY: cart.checkout.requested.v1
-      CART_CHECKOUT_REQUESTED_DLQ: cart.checkout.requested.dlq
-      CART_CHECKOUT_REQUESTED_DLQ_ROUTING_KEY: cart.checkout.requested.dlq.v1
-      ORDER_CREATED_QUEUE: order.created.queue
-      ORDER_CREATED_ROUTING_KEY: order.created.v1
-      ORDER_CREATED_DLQ: order.created.dlq
-      ORDER_CREATED_DLQ_ROUTING_KEY: order.created.dlq.v1
-      ORDER_COMPLETED_ROUTING_KEY: order.completed.v1
-      OUTBOX_BATCH_SIZE: 100
-      OUTBOX_PUBLISH_INTERVAL_SECONDS: 2
-      OUTBOX_MAX_ATTEMPTS: 10
-      MESSAGE_BUS_PROVIDER: rabbitmq
-    command: >
-      python -m src.infrastructure.workers.cart_checkout_consumer.worker
-
-  worker_order_created_consumer:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fastapi_clean_ddd_worker_order_created
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      APP_ENV: development
-      SECRET_KEY: 123123
-      DATABASE_URL: postgresql+asyncpg://postgres:123456@postgres:5432/database
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: guest
-      RABBITMQ_PASSWORD: guest
-      RABBITMQ_EXCHANGE: app.events
-      RABBITMQ_DLX_EXCHANGE: app.events.dlx
-      USER_CREATED_QUEUE: user.created.queue
-      USER_CREATED_ROUTING_KEY: user.created.v1
-      USER_CREATED_DLQ: user.created.dlq
-      USER_CREATED_DLQ_ROUTING_KEY: user.created.dlq.v1
-      CART_CHECKOUT_REQUESTED_QUEUE: cart.checkout.requested.queue
-      CART_CHECKOUT_REQUESTED_ROUTING_KEY: cart.checkout.requested.v1
-      CART_CHECKOUT_REQUESTED_DLQ: cart.checkout.requested.dlq
-      CART_CHECKOUT_REQUESTED_DLQ_ROUTING_KEY: cart.checkout.requested.dlq.v1
-      ORDER_CREATED_QUEUE: order.created.queue
-      ORDER_CREATED_ROUTING_KEY: order.created.v1
-      ORDER_CREATED_DLQ: order.created.dlq
-      ORDER_CREATED_DLQ_ROUTING_KEY: order.created.dlq.v1
-      ORDER_COMPLETED_ROUTING_KEY: order.completed.v1
-      OUTBOX_BATCH_SIZE: 100
-      OUTBOX_PUBLISH_INTERVAL_SECONDS: 2
-      OUTBOX_MAX_ATTEMPTS: 10
-      MESSAGE_BUS_PROVIDER: rabbitmq
-    command: >
-      python -m src.infrastructure.workers.order_created_consumer.worker
+      python -m src.infrastructure.workers.worker_service
 
   postgres:
     image: postgres:16-alpine

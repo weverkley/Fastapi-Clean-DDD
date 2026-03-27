@@ -2,6 +2,7 @@ import asyncio
 import inspect
 import logging
 from hashlib import sha256
+from contextlib import suppress
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
 from collections.abc import Awaitable, Callable
@@ -92,7 +93,15 @@ class RabbitMqIncomingEventAdapter(IIncomingEventAdapter):
         )
         await queue.bind(exchange, routing_key=self._routing_key)
         await dead_queue.bind(dlx, routing_key=self._dlq_routing_key)
-        await queue.consume(handle_message)
+        consumer_tag = await queue.consume(handle_message)
 
         logger.info("RabbitMQ consumer running queue=%s routing_key=%s", self._queue, self._routing_key)
-        await asyncio.Future()
+        try:
+            await asyncio.Future()
+        finally:
+            with suppress(Exception):
+                await queue.cancel(consumer_tag)
+            with suppress(Exception):
+                await channel.close()
+            with suppress(Exception):
+                await connection.close()
